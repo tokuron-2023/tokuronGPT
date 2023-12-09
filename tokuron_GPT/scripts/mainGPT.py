@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ## coding: UTF-8
 import rospy
-from std_msgs.msg import Int32
+from std_msgs.msg import Int8MultiArray
 from std_msgs.msg import String
 import time
 import openai
@@ -17,7 +17,7 @@ def cb(message):
 rospy.init_node('mainGPT')
 sub = rospy.Subscriber('GPT_U', String, cb)
 pub = rospy.Publisher('GPT_S', String, queue_size=1)
-pub2 = rospy.Publisher('location_num', Int32, queue_size=1)
+pub2 = rospy.Publisher('location_num', Int8MultiArray, queue_size=1)
 rate = rospy.Rate(10) # 10Hzで動かすrateというクラスを生成
 #self.pub2 = rospy.Publisher('locatioinN',Int32, queue_size=1)
 
@@ -32,7 +32,6 @@ messages.append({"role": "system", "content": system_msg})
 print("Say hello to your new assistant!")
 
 #ユーザが行きたい場所と選択肢を結びつける
-
 def get_locationN(choice):
     if choice == "海":
         number = 1
@@ -90,7 +89,7 @@ my_functions = [
         }
     }
 ]
-
+locationNUM = []
 while input != "quit()":
     time.sleep(1.5)
     while True:
@@ -135,11 +134,15 @@ while input != "quit()":
                 choice=name,
             )
             print(function_response)
-            pub2.publish(int(function_response))
+            locationNUM.append(int(function_response))
+            locationNUM = Int8MultiArray(data = locationNUM)
+            pub2.publish(locationNUM)
             if function_response == None:
                 messages.append({"role": "system", "content": "申し訳ありません近辺にお勧め出来る場所がありませんでした"})
+                pub.publish("申し訳ありません近辺にお勧め出来る場所がありませんでした")
             else:
                 messages.append({"role": "system", "content": "かしこまりました案内を開始します"})
+                pub.publish("かしこまりました案内を開始します")
             print("かしこまりました案内を開始します")
             #案内開始後function callingから抜け出せないパターンが頻出したため一度会話をclear
             messages.clear()
@@ -154,6 +157,7 @@ while input != "quit()":
             pub2.publish(int(function_response))
             messages.append({"role": "system", "content": "撮影を開始します"})
             print("撮影を開始します")
+            pub.publish("撮影を開始します")
             messages.clear()
 
     else:

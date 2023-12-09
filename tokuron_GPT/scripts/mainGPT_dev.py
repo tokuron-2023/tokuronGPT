@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 ## coding: UTF-8
 import rospy
-from std_msgs.msg import UInt8MultiArray
+from std_msgs.msg import UInt8
 from std_msgs.msg import String
 import time
 import openai
 import os
 import json
 from pprint import pprint
-from std_srvs.srv import SetBool
 
 def cb(message):
     global user_text
@@ -18,7 +17,7 @@ def cb(message):
 rospy.init_node('mainGPT')
 sub = rospy.Subscriber('speech_to_text', String, cb)
 pub = rospy.Publisher('gpt_string', String, queue_size=1)
-pub2 = rospy.Publisher('list', UInt8MultiArray, queue_size=1)
+pub2 = rospy.Publisher('list', UInt8, queue_size=1)
 rate = rospy.Rate(10) # 10Hzで動かすrateというクラスを生成
 #self.pub2 = rospy.Publisher('locatioinN',Int32, queue_size=1)
 
@@ -33,19 +32,20 @@ messages.append({"role": "system", "content": system_msg})
 print("Say hello to your new assistant!")
 
 #ユーザが行きたい場所と選択肢を結びつける
+
 def get_locationN(choice):
     if choice == "海":
         number = 1
-    elif choice == "病院":
+    elif choice == "公園":
         number = 2
     elif choice == "カフェ":
         number = 3
     elif choice == "図書館":
         number = 4
-    elif choice == "桜":
+    elif choice == "駅":
         number = 5
-    elif choice == "神社":
-        number = 6    
+    elif choice == "市役所":
+        number = 6
     else:
         number = None
     return number
@@ -94,7 +94,7 @@ my_functions = [
         }
     }
 ]
-locationNUM = []
+
 while input != "quit()":
     time.sleep(1.5)
     while True:
@@ -139,23 +139,11 @@ while input != "quit()":
                 choice=name,
             )
             print(function_response)
-            locationNUM.append(int(function_response))
-            locationNUM = UInt8MultiArray(data = locationNUM)
-            pub2.publish(locationNUM)
+            pub2.publish(int(function_response))
             if function_response == None:
                 messages.append({"role": "system", "content": "申し訳ありません近辺にお勧め出来る場所がありませんでした"})
-                pub.publish("申し訳ありません近辺にお勧め出来る場所がありませんでした")
             else:
                 messages.append({"role": "system", "content": "かしこまりました案内を開始します"})
-                pub.publish("かしこまりました案内を開始します")
-
-                rospy.wait_for_service("start_nav")
-                try:
-                    start_nav = rospy.ServiceProxy("start_nav", SetBool)
-                    start_nav(True)
-                except rospy.ServiceException as e:
-                        print("Service call failed: {0}".format(e))                
-
             print("かしこまりました案内を開始します")
             #案内開始後function callingから抜け出せないパターンが頻出したため一度会話をclear
             messages.clear()
@@ -170,15 +158,6 @@ while input != "quit()":
             pub2.publish(int(function_response))
             messages.append({"role": "system", "content": "撮影を開始します"})
             print("撮影を開始します")
-            pub.publish("撮影を開始します")
-
-            rospy.wait_for_service("capture_img")
-            try: 
-                capture_img = rospy.ServiceProxy("capture_img", SetBool)
-                capture_img(True)
-            except rospy.ServiceException as e:
-                        print("Service call failed: {0}".format(e))
-
             messages.clear()
 
     else:

@@ -34,20 +34,22 @@ print("Say hello to your new assistant!")
 
 #ユーザが行きたい場所と選択肢を結びつける
 def get_locationN(choice):
-    if choice == "海":
+    if choice == "河川敷":
         number = 1
-    elif choice == "病院":
-        number = 2
-    elif choice == "カフェ":
+    elif choice == "公園":
         number = 3
+    elif choice == "カフェ":
+        number = 6
     elif choice == "図書館":
         number = 4
-    elif choice == "桜":
+    elif choice == "ショッピングモール":
         number = 5
     elif choice == "神社":
-        number = 6    
-    else:
-        number = None
+        number = 2 
+    elif choice == "家":
+        number = 0   
+    # else:
+    #     number = None
     return number
 
 def camera(time):
@@ -69,7 +71,7 @@ my_functions = [
                 },
                 "choice": {
                     "type": "string", 
-                    "description": f"ユーザが行きたい場所に最も関連性が高い場所。[海,病院,カフェ,図書館,その他]から選択して",
+                    "description": f"ユーザが行きたい場所に最も関連性が高い場所。[河川敷,公園,カフェ,図書館,ショッピングモール,神社,家,その他]から選択して",
                 },
             },
 
@@ -153,6 +155,7 @@ while input != "quit()":
                 try:
                     start_nav = rospy.ServiceProxy("start_nav", SetBool)
                     start_nav(True)
+                    print("Start_nav successfully")
                 except rospy.ServiceException as e:
                         print("Service call failed: {0}".format(e))                
 
@@ -166,8 +169,8 @@ while input != "quit()":
             function_response = camera(
                 time = name
             )
-            print(function_response)
-            pub2.publish(int(function_response))
+            # print(function_response)
+            # pub2.publish(int(function_response))
             messages.append({"role": "system", "content": "撮影を開始します"})
             print("撮影を開始します")
             pub.publish("撮影を開始します")
@@ -176,6 +179,9 @@ while input != "quit()":
             try: 
                 capture_img = rospy.ServiceProxy("capture_img", SetBool)
                 capture_img(True)
+                print("Capture_img successfully")
+                # rospy.sleep(2)
+                pub.publish("撮影が完了しました")
             except rospy.ServiceException as e:
                         print("Service call failed: {0}".format(e))
 
@@ -188,3 +194,5 @@ while input != "quit()":
         #print(type(reply2))
         print(reply2)
     #print("---\n🤖 Riley: " + reply + "\n---") 
+
+    locationNUM = []

@@ -35,7 +35,7 @@ class GPTNode:
     def reach_goal_cb(self, rq):
         self.goal = rq.data
         self.pub.publish("目的地に到着しました")
-        
+
     def cb(self, message):
         self.user_text = message.data
 
@@ -207,14 +207,16 @@ class GPTNode:
                     self.messages.append({"role": "system", "content": "撮影を開始します"})
                     print("撮影を開始します")
                     self.pub.publish("撮影を開始します")
-
+                    rospy.sleep(2)
                     rospy.wait_for_service("capture_img")
                     try: 
                         capture_img = rospy.ServiceProxy("capture_img", SetBool)
                         capture_img(True)
                         print("Capture_img successfully")
                         # rospy.sleep(2)
+                        print("撮影が完了しました")
                         self.pub.publish("撮影が完了しました")
+                        rospy.sleep(2)
                     except rospy.ServiceException as e:
                                 print("Service call failed: {0}".format(e))
 

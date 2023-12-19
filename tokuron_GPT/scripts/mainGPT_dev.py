@@ -18,6 +18,7 @@ class GPTNode:
         rospy.Service("/reach_goal", SetBool, self.reach_goal_cb)
         self.rate = rospy.Rate(10)  # 10Hzで動かすrateというクラスを生成
         self.user_text = ""
+        self.flag = False
 
         # Initialize OpenAI API key
         openai.organization = ""
@@ -35,6 +36,11 @@ class GPTNode:
     def reach_goal_cb(self, rq):
         self.goal = rq.data
         self.pub.publish("目的地に到着しました")
+        print("目的地に到着しました")
+        rospy.sleep(3)
+        if self.flag == True:
+            self.pub.publish("お疲れ様でした")
+            self.flag = False
 
     def cb(self, message):
         self.user_text = message.data
@@ -54,8 +60,8 @@ class GPTNode:
             self.number = 2 
         elif choice == "家":
             self.number = 0
-        # else:
-        #     self.number = None
+        else:
+            self.number = None
         return self.number
 
     def camera(self, time):
@@ -141,6 +147,7 @@ class GPTNode:
                     print(name)
 
                     if name == "家":
+                        self.flag = True
                         function_response = self.get_locationN(
                             choice=name,
                         )
@@ -158,30 +165,14 @@ class GPTNode:
                     else:
                         locationNUM = [] 
 
-                    locationNUM_data = UInt8MultiArray(data=locationNUM)
-                    self.pub2.publish(locationNUM_data)
-                    # if name == "家":
-                    #     function_response = self.get_locationN(
-                    #         choice=name,
-                    #     )
-                    #     print(function_response)
-                    #     locationNUM.append(int(function_response))
-                    #     locationNUM = UInt8MultiArray(data = locationNUM)
-                    #     self.pub2.publish(locationNUM)
-                    # else:
-                    #     function_response = self.get_locationN(
-                    #         choice=name,
-                    #     )
-                    #     print(function_response)
-                    #     locationNUM.append(int(function_response))
-                    #     locationNUM = UInt8MultiArray(data = locationNUM)
-                    #     self.pub2.publish(locationNUM)
                     if function_response == None:
                         self.messages.append({"role": "system", "content": "申し訳ありません近辺にお勧め出来る場所がありませんでした"})
                         self.pub.publish("申し訳ありません近辺にお勧め出来る場所がありませんでした")
                     else:
                         self.messages.append({"role": "system", "content": "かしこまりました案内を開始します"})
                         self.pub.publish("かしこまりました案内を開始します")
+                        locationNUM_data = UInt8MultiArray(data=locationNUM)
+                        self.pub2.publish(locationNUM_data)
                         # print("wait for service")
                         # rospy.sleep(5)
                         rospy.wait_for_service("start_nav")
@@ -215,8 +206,8 @@ class GPTNode:
                         print("Capture_img successfully")
                         # rospy.sleep(2)
                         print("撮影が完了しました")
-                        self.pub.publish("撮影が完了しました")
                         rospy.sleep(2)
+                        self.pub.publish("撮影が完了しました")
                     except rospy.ServiceException as e:
                                 print("Service call failed: {0}".format(e))
 
